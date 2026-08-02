@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>韓文數字學習助手</title>
+
+    <!-- PWA & 離線設定 -->
+    <meta name="theme-color" content="#e0e7ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="韓文數字">
+
+    <!-- 動態生成 Manifest -->
+    <script>
+        const manifestData = {
+            "name": "韓文數字學習助手",
+            "short_name": "韓文數字",
+            "description": "離線可用的韓文數字發音與聽力練習工具",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#e0e7ff",
+            "theme_color": "#e0e7ff",
+            "orientation": "portrait",
+            "icons": [{
+                "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%233b82f6'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='220' fill='white' font-family='sans-serif' font-weight='bold'>한</text></svg>",
+                "sizes": "512x512",
+                "type": "image/svg+xml",
+                "purpose": "any maskable"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestUrl;
+        document.head.appendChild(link);
+    </script>
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --glass-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.12);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary-accent: #3b82f6;
+            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px 16px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            background: #e0e7ff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+        }
+        body::before { background: #818cf8; top: 5%; left: 5%; }
+        body::after { background: #38bdf8; bottom: 5%; right: 5%; }
+
+        .glass-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: var(--glass-shadow);
+            box-sizing: border-box;
+        }
+
+        .glass-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-main);
+            margin-bottom: 20px;
+        }
+
+        .glass-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .glass-field { margin-bottom: 16px; }
+
+        .glass-field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--text-main);
+            box-sizing: border-box;
+            outline: none;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input[type="text"]:focus {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        .stats-glass {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .glass-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            padding: 4px;
+            margin-bottom: 20px;
+            gap: 4px;
+        }
+
+        .glass-tab-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 4px;
+            border-radius: 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .glass-tab-btn.active {
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--primary-accent);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-btn {
+            width: 100%;
+            height: 46px;
+            border-radius: 16px;
+            border: 1px solid transparent;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .glass-btn-primary {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        .glass-btn-secondary {
+            background: rgba(255, 255, 255, 0.65);
+            border-color: var(--glass-border);
+            color: var(--text-main);
+        }
+
+        .glass-btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        }
+
+        .glass-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .display-box {
+            background: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .feedback {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 14px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .feedback.correct {
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #065f46;
+        }
+
+        .feedback.incorrect {
+            background: rgba(239, 68, 68, 0.18);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #991b1b;
+        }
+
+        .game-panel { display: none; }
+        .game-panel.active { display: block; }
+
+        .flex-row { display: flex; gap: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="glass-card">
+    <div class="glass-header">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2.1l1.1-3h4.6l1.1 3H23l-4.5-12zm-2.62 7l1.62-4.41L19.12 17h-3.24z"/></svg>
+        <h1>韓文數字學習助手</h1>
+    </div>
+
+    <!-- 範圍選單 -->
+    <div class="glass-field">
+        <label for="rangeSelect">數字範圍：</label>
+        <select id="rangeSelect" onchange="initGame()">
+            <option value="10">0 - 10 (個位數)</option>
+            <option value="100" selected>0 - 100 (十位數)</option>
+            <option value="1000">0 - 1,000 (百位數)</option>
+            <option value="10000">0 - 10,000 (千位數)</option>
+            <option value="1000000">0 - 1,000,000 (百萬數)</option>
+        </select>
+    </div>
+
+    <!-- 統計看板 -->
+    <div class="stats-glass">
+        <div>答題：<span id="statTotal">0</span> | 對：<span id="statCorrect">0</span> | 錯：<span id="statWrong">0</span></div>
+        <div>正確率：<span id="statRate">0%</span></div>
+    </div>
+
+    <!-- 分頁標籤 -->
+    <div class="glass-tabs">
+        <button class="glass-tab-btn active" onclick="switchTab(0)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>聽音寫數
+        </button>
+        <button class="glass-tab-btn" onclick="switchTab(1)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>錄音比對
+        </button>
+        <button class="glass-tab-btn" onclick="switchTab(2)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>看字填數
+        </button>
+    </div>
+
+    <!-- 模式一：聽音寫數 -->
+    <div id="panel0" class="game-panel active">
+        <button class="glass-btn glass-btn-secondary" onclick="playCurrentTTS()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>播放韓語語音
+        </button>
+        <div class="glass-field" style="margin-top: 16px;">
+            <label for="mode1Input">輸入阿拉伯數字：</label>
+            <input type="text" id="mode1Input" placeholder="例如: 1,500 或 1500" inputmode="numeric">
+            <button id="mode1Submit" class="glass-btn glass-btn-primary" onclick="checkMode1()">提交答案</button>
+        </div>
+        <div id="mode1Result"></div>
+        <button class="glass-btn glass-btn-secondary" style="margin-top: 16px;" onclick="nextQuestion()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>下一題
+        </button>
+    </div>
+
+    <!-- 模式二：錄音比對 -->
+    <div id="panel1" class="game-panel">
+        <div class="display-box" id="mode2Display">--</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-bottom: 12px;" id="mode2Spelling"></div>
+        
+        <button id="recordBtn" class="glass-btn glass-btn-primary" onclick="toggleRecord()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/></svg>開始錄音
+        </button>
+        
+        <div class="flex-row">
+            <button id="playRecordBtn" class="glass-btn glass-btn-secondary" onclick="playRecording()" disabled>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>播放錄音
+            </button>
+            <button id="downloadRecordBtn" class="glass-btn glass-btn-secondary" onclick="downloadRecording()" disabled>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下載
+            </button>
+        </div>
+        
+        <div id="mode2Status" style="font-size: 0.8rem; text-align: center; color: var(--text-muted); margin-top: 10px;"></div>
+        <button class="glass-btn glass-btn-secondary" style="margin-top: 16px;" onclick="nextQuestion()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>下一題
+        </button>
+    </div>
+
+    <!-- 模式三：看字填數 -->
+    <div id="panel2" class="game-panel">
+        <div class="display-box" id="mode3Display" style="font-size: 1.5rem;">--</div>
+        <div class="glass-field">
+            <label for="mode3Input">輸入阿拉伯數字：</label>
+            <input type="text" id="mode3Input" placeholder="例如: 250" inputmode="numeric">
+            <button id="mode3Submit" class="glass-btn glass-btn-primary" onclick="checkMode3()">提交答案</button>
+        </div>
+        <div id="mode3Result"></div>
+        <button class="glass-btn glass-btn-secondary" style="margin-top: 16px;" onclick="nextQuestion()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>下一題
+        </button>
+    </div>
+
+    <button style="background: none; border: none; color: var(--text-muted); font-size: 0.75rem; width: 100%; margin-top: 20px; cursor: pointer; opacity: 0.8;" onclick="resetStats()">重置答題統計數據</button>
+</div>
+
+<script>
+    let currentNumber = 0;
+    let maxRange = 100;
+    let currentTab = 0;
+
+    let totalAnswered = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let hasAnsweredCurrent = false;
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioBlob = null;
+    let audioUrl = null;
+    let isRecording = false;
+
+    // 韓文漢字詞數字邏輯
+    function numberToKorean(num) {
+        if (num === 0) return "영";
+        
+        const units = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
+        const smallUnits = ["", "십", "백", "천"];
+        const bigUnits = ["", "만", "억"];
+
+        function convertBlock(n) {
+            let result = "";
+            let str = n.toString();
+            let len = str.length;
+
+            for (let i = 0; i < len; i++) {
+                let digit = parseInt(str[i]);
+                let pos = len - 1 - i;
+
+                if (digit !== 0) {
+                    if (digit === 1 && pos > 0) {
+                        result += smallUnits[pos];
+                    } else {
+                        result += units[digit] + smallUnits[pos];
+                    }
+                }
+            }
+            return result;
+        }
+
+        let strNum = num.toString();
+        let blocks = [];
+        
+        while (strNum.length > 0) {
+            blocks.push(parseInt(strNum.slice(-4)));
+            strNum = strNum.slice(0, -4);
+        }
+
+        let finalResult = "";
+        for (let i = blocks.length - 1; i >= 0; i--) {
+            let blockVal = blocks[i];
+            if (blockVal > 0) {
+                finalResult += convertBlock(blockVal) + bigUnits[i];
+            }
+        }
+
+        return finalResult;
+    }
+
+    // 千位符格式化（逗號 ,）
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // 解析輸入值
+    function parseNumber(str) {
+        if (!str) return NaN;
+        return parseInt(str.replace(/[,.]/g, "").trim(), 10);
+    }
+
+    function updateStatsUI() {
+        document.getElementById('statTotal').innerText = totalAnswered;
+        document.getElementById('statCorrect').innerText = correctCount;
+        document.getElementById('statWrong').innerText = wrongCount;
+        let rate = totalAnswered === 0 ? 0 : Math.round((correctCount / totalAnswered) * 100);
+        document.getElementById('statRate').innerText = rate + "%";
+    }
+
+    function resetStats() {
+        if(confirm("確定要重置所有答題統計嗎？")) {
+            totalAnswered = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            updateStatsUI();
+        }
+    }
+
+    function initGame() {
+        maxRange = parseInt(document.getElementById('rangeSelect').value, 10);
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        currentNumber = Math.floor(Math.random() * (maxRange + 1));
+        hasAnsweredCurrent = false;
+        
+        document.getElementById('mode1Input').value = '';
+        document.getElementById('mode1Result').className = 'feedback';
+        document.getElementById('mode1Result').innerHTML = '';
+        document.getElementById('mode1Submit').disabled = false;
+        
+        document.getElementById('mode3Input').value = '';
+        document.getElementById('mode3Result').className = 'feedback';
+        document.getElementById('mode3Result').innerHTML = '';
+        document.getElementById('mode3Submit').disabled = false;
+
+        document.getElementById('mode2Display').innerText = formatNumber(currentNumber);
+        document.getElementById('mode2Spelling').innerText = "韓文: " + numberToKorean(currentNumber);
+        document.getElementById('mode2Status').innerText = "點擊開始錄音，唸出上面數字的韓文";
+        document.getElementById('playRecordBtn').disabled = true;
+        document.getElementById('downloadRecordBtn').disabled = true;
+        
+        audioBlob = null;
+        if(audioUrl) {
+            URL.revokeObjectURL(audioUrl);
+            audioUrl = null;
+        }
+
+        if (currentTab === 0) setTimeout(playCurrentTTS, 300);
+        else if (currentTab === 2) document.getElementById('mode3Display').innerText = numberToKorean(currentNumber);
+    }
+
+    function switchTab(index) {
+        currentTab = index;
+        let tabs = document.querySelectorAll('.glass-tab-btn');
+        let panels = document.querySelectorAll('.game-panel');
+        
+        tabs.forEach((t, i) => {
+            if(i === index) t.classList.add('active');
+            else t.classList.remove('active');
+        });
+
+        panels.forEach((p, i) => {
+            if(i === index) p.classList.add('active');
+            else p.classList.remove('active');
+        });
+
+        if (index === 0) playCurrentTTS();
+        if (index === 2) document.getElementById('mode3Display').innerText = numberToKorean(currentNumber);
+    }
+
+    // 朗讀韓語 (ko-KR)
+    function playCurrentTTS() {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        let utterance = new SpeechSynthesisUtterance(numberToKorean(currentNumber));
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.85;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function checkMode1() {
+        if (hasAnsweredCurrent) return;
+        let userNum = parseNumber(document.getElementById('mode1Input').value);
+        let resDiv = document.getElementById('mode1Result');
+        if (isNaN(userNum)) {
+            resDiv.className = 'feedback incorrect';
+            resDiv.innerHTML = `請輸入有效的數字！`;
+            return;
+        }
+
+        hasAnsweredCurrent = true;
+        totalAnswered++;
+        document.getElementById('mode1Submit').disabled = true;
+
+        if (userNum === currentNumber) {
+            correctCount++;
+            resDiv.className = 'feedback correct';
+            resDiv.innerHTML = `答對了！<br>阿拉伯數字: ${formatNumber(currentNumber)}<br>韓文: <b>${numberToKorean(currentNumber)}</b>`;
+        } else {
+            wrongCount++;
+            resDiv.className = 'feedback incorrect';
+            resDiv.innerHTML = `答錯囉。正確答案：${formatNumber(currentNumber)}`;
+        }
+        updateStatsUI();
+    }
+
+    async function toggleRecord() {
+        let recBtn = document.getElementById('recordBtn');
+        let statusDiv = document.getElementById('mode2Status');
+        
+        if (!isRecording) {
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('playRecordBtn').disabled = false;
+                    document.getElementById('downloadRecordBtn').disabled = false;
+                    statusDiv.innerHTML = "錄音完成！點擊播放或下載。";
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recBtn.className = "glass-btn glass-btn-danger";
+                recBtn.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>停止錄音`;
+                statusDiv.innerHTML = "正在錄音中...";
+            } catch (err) {
+                alert("無法存取麥克風: " + err);
+            }
+        } else {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            isRecording = false;
+            recBtn.className = "glass-btn glass-btn-primary";
+            recBtn.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/></svg>重新錄音`;
+        }
+    }
+
+    function playRecording() {
+        if (!audioBlob) return;
+        new Audio(audioUrl).play();
+    }
+
+    function downloadRecording() {
+        if (!audioBlob) return;
+        let a = document.createElement('a');
+        a.href = audioUrl;
+        a.download = `kr_number_${formatNumber(currentNumber)}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    window.onload = function() {
+        initGame();
+    };
+
+    // 動態內嵌 Service Worker 實現 100% 離線可用
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                const CACHE_NAME = 'korean-numbers-single-v1';
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(
+                        caches.open(CACHE_NAME).then((cache) => cache.addAll(['./']))
+                        .then(() => self.skipWaiting())
+                    );
+                });
+                self.addEventListener('activate', (e) => {
+                    e.waitUntil(
+                        caches.keys().then((keys) => Promise.all(
+                            keys.map((k) => k !== CACHE_NAME ? caches.delete(k) : null)
+                        )).then(() => self.clients.claim())
+                    );
+                });
+                self.addEventListener('fetch', (e) => {
+                    if (e.request.method !== 'GET') return;
+                    e.respondWith(
+                        caches.match(e.request).then((res) => res || fetch(e.request).then((netRes) => {
+                            if (netRes && netRes.status === 200) {
+                                const clone = netRes.clone();
+                                caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+                            }
+                            return netRes;
+                        })).catch(() => caches.match('./'))
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+        });
+    }
+</script>
+
+</body>
+</html>
+
+
